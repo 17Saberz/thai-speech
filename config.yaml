@@ -1,0 +1,7 @@
+samplerate: 16000
+channels: 1
+duration_limit: 3
+
+speaker_no: speaker02
+correction: correct
+filename: k_correct_test_s05.wav
