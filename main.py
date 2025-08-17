@@ -19,12 +19,12 @@ duration_limit = config["duration_limit"]
 recorded_frames = []
 
 # กำหนด path ที่จะบันทึกไฟล์เสียง
-speaker_no = config["speaker_no"]
+speaker_no = config["speaker_no"]   
 correction = config["correction"]
 filename = config["filename"]
 
-# output_folder = os.path.join("dataset", speaker_no, correction)
-output_folder = os.path.join("test")
+output_folder = os.path.join("dataset", speaker_no, correction)
+# output_folder = os.path.join("test")
 
 filepath = os.path.join(output_folder, filename)
 

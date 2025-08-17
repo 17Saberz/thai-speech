@@ -2,6 +2,6 @@ samplerate: 16000
 channels: 1
 duration_limit: 3
 
-speaker_no: speaker02
+speaker_no: speaker05
 correction: correct
-filename: k_correct_test_s05.wav
+filename: k_correct_fast_round20.wav
