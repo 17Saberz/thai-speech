@@ -1,0 +1,6 @@
+Label: 2
+Confidence (Top): 80.03%
+Confidence by Class:
+   - 0          : 0.73%
+   - 1          : 19.24%
+   - 2          : 80.03%

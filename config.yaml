@@ -2,6 +2,6 @@ samplerate: 16000
 channels: 1
 duration_limit: 3
 
-speaker_no: speaker08
+speaker_no: test
 correction: correct
-filename: snake_round1.wav
+filename: test.wav
