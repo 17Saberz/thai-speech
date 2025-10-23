@@ -2,6 +2,6 @@ samplerate: 16000
 channels: 1
 duration_limit: 3
 
-speaker_no: speaker05
+speaker_no: speaker06
 correction: correct
-filename: k_correct_fast_round20.wav
+filename: loss_round10.wav
