@@ -12,6 +12,7 @@ import torch
 
 from sklearn.neural_network import MLPClassifier
 from sklearn.preprocessing import LabelBinarizer
+from numpy.linalg import norm
 from transformers import Wav2Vec2Processor, Wav2Vec2Model
 from joblib import load
 
@@ -34,12 +35,16 @@ duration_limit = config["duration_limit"]
 recorded_frames = []
 
 speaker_no = config["speaker_no"]
-correction = config["correction"]
+# correction = config["correction"]
 filename = config["filename"]
 
-output_folder = os.path.join("dataset_eng", speaker_no, correction)
+# ✅ เปลี่ยนโฟลเดอร์เก็บไฟล์เป็น dataset_eng_train (สำหรับชุดเทรน)
+#    *หากต้องการกลับไปใช้ของเดิม ให้เปลี่ยนกลับเป็น "dataset_eng" ได้เลย
+output_base = "dataset_train"   # 🔹 โฟลเดอร์หลักใหม่สำหรับเสียงเทรน
+output_folder = os.path.join(output_base, speaker_no)
 os.makedirs(output_folder, exist_ok=True)
 filepath = os.path.join(output_folder, filename)
+
 
 # ------------------------- RECORDING -------------------------
 def audio_callback(indata, frames, time, status):
@@ -78,6 +83,7 @@ audio_data = np.concatenate(recorded_frames, axis=0)
 sf.write(filepath, audio_data, samplerate)
 print(f"✅ บันทึกไฟล์เสียงต้นฉบับเป็น '{filepath}' เรียบร้อยแล้ว!")
 
+
 # ------------------------- PREPROCESSING -------------------------
 print("\n🧹 ขั้นตอน Preprocessing (ตัดเสียงเงียบ + Padding)...")
 
@@ -91,6 +97,7 @@ y_padded = np.pad(y_trimmed, (pad, pad), mode="constant")
 preprocessed_path = filepath.replace(".wav", "_preprocessed.wav")
 sf.write(preprocessed_path, y_padded, samplerate)
 print(f"✅ บันทึกไฟล์หลัง Preprocessing เป็น '{preprocessed_path}'")
+
 
 # ------------------------- FEATURE EXTRACTION -------------------------
 print("\n🎧 ขั้นตอน Feature Extraction (Wav2Vec2)...")
@@ -111,6 +118,7 @@ embedding_path = preprocessed_path.replace(".wav", "_embedding.npy")
 np.save(embedding_path, embeddings)
 print(f"✅ สร้าง Feature Embedding เรียบร้อย: {embedding_path}")
 
+
 # ------------------------- SCALING -------------------------
 print("\n📏 ขั้นตอน Scaling (ใช้ StandardScaler จาก .pkl)...")
 
@@ -127,6 +135,7 @@ np.save(scaled_path, embedding_scaled)
 print(f"✅ บันทึกไฟล์หลัง Scaling เรียบร้อย: {scaled_path}")
 
 # ------------------------- CLASSIFICATION -------------------------
+
 print("\n🧠 ขั้นตอน Classification (โหลดโมเดล MLP จาก .npz)...")
 
 # โหลดโมเดลจากไฟล์ .npz
@@ -210,6 +219,28 @@ except Exception as e:
 
 predicted_label = y_pred[0]
 confidence = float(np.max(y_prob[0]) * 100.0)
+
+# ------------------------- CONFIDENCE FILTER -------------------------
+print("\n🛡️ ขั้นตอน Confidence Filtering (สำหรับ reject เสียงอื่น)...")
+
+THRESHOLD = 0.8  # ปรับได้ตามต้องการ (0.7–0.85 เป็นช่วงที่ใช้บ่อย)
+MARGIN = 0.10      # ส่วนต่าง top1-top2 ขั้นต่ำ (ป้องกันเสียงก้ำกึ่ง)
+
+# เรียงค่า probability จากมากไปน้อย
+sorted_idx = np.argsort(y_prob[0])[::-1]
+best_idx, second_idx = sorted_idx[0], sorted_idx[1]
+best_label = mlp_model.classes_[best_idx]
+best_conf = y_prob[0][best_idx]
+second_conf = y_prob[0][second_idx]
+
+# ตรวจสอบเงื่อนไข unknown
+if (best_conf < THRESHOLD) or ((best_conf - second_conf) < MARGIN):
+    predicted_label = "unknown"
+    confidence = float(best_conf * 100)
+    print(f"⚠️ เสียงนี้ไม่มั่นใจพอ (top={best_conf:.2f}, diff={best_conf - second_conf:.2f}) → จัดเป็น UNKNOWN")
+else:
+    predicted_label = best_label
+    confidence = float(best_conf * 100)
 
 # ------------------------- OUTPUT -------------------------
 print("\n📢 ขั้นตอน Output (ผลการจำแนก)...")
