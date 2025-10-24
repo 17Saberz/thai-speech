@@ -3,5 +3,4 @@ channels: 1
 duration_limit: 3
 
 speaker_no: test
-correction: correct
 filename: test.wav
