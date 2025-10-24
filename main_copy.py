@@ -3,23 +3,24 @@ import sounddevice as sd
 import soundfile as sf
 import numpy as np
 import sys, types, importlib.util
-
-# ✅ patch ก่อน joblib
-if importlib.util.find_spec("numpy.random._mt19937") is None:
-    fake_module = types.ModuleType("numpy.random._mt19937")
-    fake_module.MT19937 = np.random.MT19937
-    sys.modules["numpy.random._mt19937"] = fake_module
-
 import threading
 import librosa
 import yaml
 import matplotlib.pyplot as plt
 import librosa.display
 import torch
+
+from sklearn.neural_network import MLPClassifier
+from sklearn.preprocessing import LabelBinarizer
 from transformers import Wav2Vec2Processor, Wav2Vec2Model
 from joblib import load
 
 
+# ✅ patch ก่อน joblib
+if importlib.util.find_spec("numpy.random._mt19937") is None:
+    fake_module = types.ModuleType("numpy.random._mt19937")
+    fake_module.MT19937 = np.random.MT19937
+    sys.modules["numpy.random._mt19937"] = fake_module
 
 
 # ------------------------- CONFIG -------------------------
@@ -127,10 +128,6 @@ print(f"✅ บันทึกไฟล์หลัง Scaling เรียบ�
 
 # ------------------------- CLASSIFICATION -------------------------
 print("\n🧠 ขั้นตอน Classification (โหลดโมเดล MLP จาก .npz)...")
-
-import numpy as np
-from sklearn.neural_network import MLPClassifier
-from sklearn.preprocessing import LabelBinarizer
 
 # โหลดโมเดลจากไฟล์ .npz
 mlp_data = np.load("model/mlp_speed_classifier_extend_v2.npz", allow_pickle=True)
