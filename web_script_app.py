@@ -17,6 +17,8 @@ import soundfile as sf
 import librosa
 import yaml
 import torch
+import matplotlib.pyplot as plt
+
 from transformers import Wav2Vec2Processor, Wav2Vec2Model
 from joblib import load as joblib_load
 from sklearn.neural_network import MLPClassifier
@@ -340,6 +342,14 @@ if start_btn:
         raw_path = raw_path.replace(".wav", f"_{ts}.wav")
         sf.write(raw_path, y, sr)
 
+        fig, ax = plt.subplots(figsize=(6, 2))
+        ax.plot(y, color="royalblue")
+        ax.set_title("Waveform")
+        ax.set_xlabel("Time (samples)")
+        ax.set_ylabel("Amplitude")
+        ax.set_xlim(0, len(y))
+        st.pyplot(fig)
+
         # 2) Preprocess
         st.info(t(lang, "preprocess"))
         y_pp = preprocess(y, sr, top_db=top_db, pad_ms=pad_ms)
@@ -380,8 +390,20 @@ if start_btn:
         st.subheader(f"{t(lang, 'result')}: **{str(final_label).upper()}**")
         st.write(f"{t(lang, 'top_conf')}: **{top_conf:.2f}%**")
 
+        # 🔹 ถ้ามีชื่อคลาสจริง
+        label_map = {
+            0: "FAST",
+            1: "NORMAL",
+            2: "SLOW",
+        }
+        # ถ้ามีไฟล์ labels.txt ใน model/
+        # label_map = {i: line.strip() for i, line in enumerate(open("model/labels.txt", encoding="utf-8"))}
+
+        # แปลงคลาสที่เป็นตัวเลข -> ชื่อจริง
+        class_names = [label_map.get(int(c), str(c)) for c in mlp.classes_]
+
         # Per-class probabilities
-        df = pd.DataFrame({"class": mlp.classes_, "probability (%)": (prob * 100).astype(float)})
+        df = pd.DataFrame({"class": class_names, "probability (%)": (prob * 100).astype(float)})
         st.write(f"#### {t(lang, 'per_class')}")
         st.dataframe(df, use_container_width=True)
         st.bar_chart(df.set_index("class"))
